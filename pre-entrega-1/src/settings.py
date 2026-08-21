@@ -87,7 +87,7 @@ _ENV_KEY_NAMES = {
     Provider.GEMINI: "GOOGLE_API_KEY",
 }
 
-_CONFIG_KEY_FIELDS = {
+CONFIG_KEY_FIELDS = {
     Provider.OPENAI: "openai_api_key",
     Provider.ANTHROPIC: "anthropic_api_key",
     Provider.GEMINI: "google_api_key",
@@ -107,7 +107,7 @@ def config_for(provider: Provider, **overrides) -> LLMConfig:
     data = {
         "provider": provider,
         "model": settings.models[provider],
-        _CONFIG_KEY_FIELDS[provider]: api_key_for(provider),
+        CONFIG_KEY_FIELDS[provider]: api_key_for(provider),
     }
     data.update(overrides)
     return LLMConfig(**data)
