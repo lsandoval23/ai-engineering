@@ -1,0 +1,13 @@
+# Python 3.12 — exact versions pinned on 2026-09-07 (latest on PyPI that day).
+# The course notebook installs these unpinned; LangChain moves fast, so we pin.
+langchain-core==1.6.2
+langchain-openai==1.6.0
+langchain-anthropic==1.7.1
+langchain-google-genai==4.4.0
+pydantic==2.13.5
+python-dotenv==1.2.3
+PyYAML==6.0.3
+
+# Testing (offline: no network, no API keys)
+pytest==9.1.1
+pytest-asyncio==1.4.0
