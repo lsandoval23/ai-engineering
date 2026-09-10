@@ -1,0 +1,30 @@
+# All tunable defaults for the extraction pipeline.
+# Nothing in src/ hardcodes these values: they are loaded and validated at
+# startup by src/settings.py (AppSettings). Secrets do NOT belong here —
+# API keys go in .env (see .env.example).
+
+# Provider used when none is given (--provider / process_text(provider=...)).
+default_provider: gemini
+
+defaults:
+  temperature: 0.0       # extraction wants determinism, not creativity
+  timeout_s: 30.0        # per model call, passed to the provider SDK
+  max_attempts: 3        # total attempts per model (1 initial + 2 retries)
+  backoff:               # wait before retry n: min(initial * 2**n + uniform(0, jitter), max)
+    initial: 1.0
+    max: 10.0
+    jitter: 1.0
+
+# Model IDs are config, not code: catalogs move faster than course material.
+# Gemini IDs verified against the API on 2026-09-07 (see README, "Decisions").
+models:
+  openai: gpt-4o-mini
+  anthropic: claude-sonnet-4-6
+  gemini: gemini-3.5-flash
+
+# "A lighter model" of the same provider, so one API key is enough for failover.
+# Remove a provider's entry to run it without a fallback.
+fallback_models:
+  openai: gpt-4.1-mini
+  anthropic: claude-haiku-4-5
+  gemini: gemini-flash-lite-latest
