@@ -9,8 +9,8 @@ Layers, innermost first (each one maps to a failure class from the course):
 2. ``.with_retry(...)`` — exponential backoff with jitter for **transient**
    failures: rate limits, timeouts, connection drops, 5xx and truncation.
 3. Error-aware retry — on a **format** failure (the object did not validate)
-   the chain is invoked once more with the validation error appended to the
-   conversation, so the model can correct itself.
+   the chain is invoked once more with the model's previous answer and the
+   validation error appended to the conversation, so the model can correct itself.
 4. ``.with_fallbacks([...])`` — if the primary model still fails, the same
    stack runs on a lighter model of the same provider.
 
@@ -23,10 +23,12 @@ comes from ``config.yaml`` through :mod:`src.settings`; nothing is hardcoded her
 
 from __future__ import annotations
 
+import json
 import logging
 from functools import lru_cache
 from typing import Any
 
+import httpx
 from langchain_anthropic import ChatAnthropic
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_core.exceptions import (
@@ -43,7 +45,6 @@ from langchain_core.runnables import Runnable, RunnableConfig, RunnableLambda
 from langchain_core.runnables.retry import ExponentialJitterParams
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
-from pydantic import ValidationError
 
 from src.schemas import TechnicalEntities
 from src.settings import PROVIDERS, Provider, get_settings, require_api_key
@@ -61,17 +62,35 @@ class TruncatedResponseError(RuntimeError):
     """The provider cut the response short, so the JSON cannot be complete."""
 
 
-# Transient: worth another attempt after a backoff. These are langchain-core's
-# normalized classes; every provider integration maps its SDK errors onto them.
+class SchemaValidationError(OutputParserException):
+    """The model answered, but the answer does not satisfy ``TechnicalEntities``.
+
+    Every provider reports this differently (pydantic ``ValidationError``,
+    ``OutputParserException``, OpenAI's refusal error, a bare ``ValueError``);
+    ``_check_and_unwrap`` normalizes all of them into this one class so the
+    error-aware retry has a single thing to catch. ``raw`` keeps the offending
+    ``AIMessage`` so the corrective prompt can show the model its own answer.
+    """
+
+    def __init__(self, error: str, raw: AIMessage) -> None:
+        super().__init__(error)
+        self.raw = raw
+
+
+# Transient: worth another attempt after a backoff. langchain-core's normalized
+# classes cover OpenAI and Anthropic; langchain-google-genai only maps Google's
+# API errors, so a Gemini timeout or connection drop arrives as a raw httpx error.
 TRANSIENT_ERRORS: tuple[type[BaseException], ...] = (
     ModelRateLimitError,
     ModelTimeoutError,
     ModelConnectionError,
     ModelAPIError,  # 5xx / overloaded
+    httpx.TimeoutException,
+    httpx.ConnectError,
     TruncatedResponseError,
 )
 # Format: the model answered, but the object does not satisfy the contract.
-FORMAT_ERRORS: tuple[type[BaseException], ...] = (ValidationError, OutputParserException)
+FORMAT_ERRORS: tuple[type[BaseException], ...] = (SchemaValidationError,)
 
 
 # --------------------------------------------------------------------------- #
@@ -166,11 +185,26 @@ def _check_and_unwrap(output: dict[str, Any]) -> TechnicalEntities:
             f"response cut short by the provider (finish_reason={reason!r}); "
             "the structured output is incomplete"
         )
-    if output.get("parsing_error") is not None:
-        raise output["parsing_error"]
+    error = output.get("parsing_error")
+    if error is not None:
+        raise SchemaValidationError(str(error), raw=raw) from error
     if output.get("parsed") is None:
-        raise OutputParserException("model returned no structured output")
+        raise SchemaValidationError("model returned no structured output", raw=raw)
     return output["parsed"]
+
+
+def _previous_answer(raw: AIMessage) -> AIMessage:
+    """The model's rejected answer as a plain assistant turn.
+
+    The raw message is not replayed verbatim: with tool-calling structured
+    output it carries a ``tool_call`` that OpenAI and Anthropic refuse to accept
+    without a matching tool result. Its arguments (or the JSON text, on the
+    ``json_schema`` path) are what the model actually said, so that is what goes
+    back into the conversation.
+    """
+    if raw.tool_calls:
+        return AIMessage(content=json.dumps(raw.tool_calls[0]["args"], ensure_ascii=False))
+    return AIMessage(content=raw.content or "")
 
 
 class RetryLogger(BaseCallbackHandler):
@@ -211,21 +245,34 @@ def _with_error_aware_retry(chain: Runnable) -> Runnable:
     """One corrective re-invocation when the output fails validation.
 
     Unlike the blind retry, the second call tells the model *what* was wrong:
-    Pydantic's error already names the offending field.
+    the rejected answer goes back as an assistant turn, followed by the
+    validation error (Pydantic already names the offending field).
+
+    Both a sync and an async body are provided so the returned chain works
+    with ``invoke`` as well as ``ainvoke``.
     """
 
-    async def run(inputs: dict[str, Any], config: RunnableConfig) -> TechnicalEntities:
+    def _feedback_inputs(inputs: dict[str, Any], error: SchemaValidationError) -> dict[str, Any]:
+        logger.warning(
+            "Output failed validation (%s); re-invoking once with the error as feedback",
+            type(error).__name__,
+        )
+        feedback = HumanMessage(content=FEEDBACK_TEMPLATE.format(error=error))
+        return {**inputs, "feedback": [_previous_answer(error.raw), feedback]}
+
+    def run(inputs: dict[str, Any], config: RunnableConfig) -> TechnicalEntities:
+        try:
+            return chain.invoke(inputs, config=config)
+        except FORMAT_ERRORS as error:
+            return chain.invoke(_feedback_inputs(inputs, error), config=config)
+
+    async def arun(inputs: dict[str, Any], config: RunnableConfig) -> TechnicalEntities:
         try:
             return await chain.ainvoke(inputs, config=config)
         except FORMAT_ERRORS as error:
-            logger.warning(
-                "Output failed validation (%s); re-invoking once with the error as feedback",
-                type(error).__name__,
-            )
-            feedback = HumanMessage(content=FEEDBACK_TEMPLATE.format(error=error))
-            return await chain.ainvoke({**inputs, "feedback": [feedback]}, config=config)
+            return await chain.ainvoke(_feedback_inputs(inputs, error), config=config)
 
-    return RunnableLambda(run, name="error_aware_retry")
+    return RunnableLambda(run, afunc=arun, name="error_aware_retry")
 
 
 def _log_fallback_switch(inputs: dict[str, Any]) -> dict[str, Any]:
@@ -311,13 +358,14 @@ async def process_text(text: str, provider: Provider | None = None) -> Technical
     never replaced by a silent default.
     """
     provider = provider or get_settings().default_provider
-    chain = get_chain(provider)
     logger.info("[%s] Processing text (%d characters)", provider, len(text))
     try:
+        # Inside the try so build-time failures (missing key, bad config) are logged too.
+        chain = get_chain(provider)
         result = await chain.ainvoke({"text": text})
     except Exception as error:
         logger.error(
-            "[%s] Extraction failed after retries and fallback: %s: %s",
+            "[%s] Extraction failed: %s: %s",
             provider,
             type(error).__name__,
             error,

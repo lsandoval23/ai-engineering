@@ -4,18 +4,19 @@ from __future__ import annotations
 
 import logging
 
+import httpx
 import pytest
 from langchain_core.exceptions import (
     ModelAuthenticationError,
     ModelRateLimitError,
     ModelTimeoutError,
+    OutputParserException,
 )
-from langchain_core.messages import HumanMessage
-from pydantic import ValidationError
+from langchain_core.messages import AIMessage, HumanMessage
 
 import src.chain as chain_module
 import src.settings as settings_module
-from src.chain import build_chain, compose_chain, get_model, process_text
+from src.chain import SchemaValidationError, build_chain, compose_chain, get_model, process_text
 from src.schemas import CriticalityLevel, TechnicalEntities
 from tests.conftest import FAST_BACKOFF, VALID_ARGS, tool_call_message
 
@@ -33,6 +34,15 @@ async def test_happy_path_returns_a_validated_instance(scripted):
     assert len(model.calls) == 1
 
 
+def test_chain_also_works_synchronously(scripted):
+    """The error-aware step defines both bodies, so plain ``invoke`` is supported too."""
+    invalid = {**VALID_ARGS, "technologies": []}
+    model = scripted(tool_call_message(invalid), tool_call_message(VALID_ARGS))
+    result = compose_chain(model, **FAST).invoke(INPUT)
+    assert isinstance(result, TechnicalEntities)
+    assert len(model.calls) == 2
+
+
 async def test_transient_errors_are_retried_with_backoff(scripted, caplog):
     model = scripted(
         ModelRateLimitError("429 too many requests"),
@@ -48,6 +58,21 @@ async def test_transient_errors_are_retried_with_backoff(scripted, caplog):
     assert "ModelRateLimitError" in failures[0] and "ModelTimeoutError" in failures[1]
     retries = [m for m in messages if m.startswith("Retry attempt")]
     assert [m.split()[2] for m in retries] == ["2/3", "3/3"]
+
+
+async def test_raw_httpx_errors_from_the_gemini_sdk_are_retried(scripted, caplog):
+    """langchain-google-genai does not wrap timeouts/connection drops; the chain must."""
+    model = scripted(
+        httpx.TimeoutException("read timed out"),
+        httpx.ConnectError("connection refused"),
+        tool_call_message(VALID_ARGS),
+    )
+    with caplog.at_level(logging.WARNING, logger=LOGGER):
+        result = await compose_chain(model, **FAST).ainvoke(INPUT)
+    assert isinstance(result, TechnicalEntities)
+    assert len(model.calls) == 3
+    retries = [r.getMessage() for r in caplog.records if r.getMessage().startswith("Retry attempt")]
+    assert len(retries) == 2
 
 
 async def test_truncated_response_is_detected_and_retried(scripted, caplog):
@@ -71,18 +96,37 @@ async def test_validation_failure_triggers_error_aware_retry(scripted, caplog):
         result = await compose_chain(model, **FAST).ainvoke(INPUT)
     assert isinstance(result, TechnicalEntities)
     assert len(model.calls) == 2  # one corrective call, no blind retries in between
-    last_message = model.calls[1][-1]
+    previous_answer, last_message = model.calls[1][-2:]
+    # The model sees its own rejected answer as an assistant turn (no dangling tool call)...
+    assert isinstance(previous_answer, AIMessage)
+    assert not previous_answer.tool_calls
+    assert '"technologies"' in previous_answer.content
+    # ...followed by the validation error naming the field.
     assert isinstance(last_message, HumanMessage)
     assert "did not pass schema validation" in last_message.content
     assert "technologies" in last_message.content  # Pydantic names the field
     assert any("re-invoking once with the error as feedback" in r.getMessage() for r in caplog.records)
 
 
+async def test_answer_without_structured_output_is_normalized_and_retried(scripted):
+    """Any parser failure (refusal, bare ValueError, no tool call) becomes a format error."""
+    plain_text = AIMessage(content="I cannot help with that.", response_metadata={"finish_reason": "stop"})
+    model = scripted(plain_text, tool_call_message(VALID_ARGS))
+    result = await compose_chain(model, **FAST).ainvoke(INPUT)
+    assert isinstance(result, TechnicalEntities)
+    assert len(model.calls) == 2
+    previous_answer = model.calls[1][-2]
+    assert isinstance(previous_answer, AIMessage)
+    assert previous_answer.content == "I cannot help with that."
+
+
 async def test_second_validation_failure_propagates(scripted):
     invalid = {**VALID_ARGS, "technologies": []}
     model = scripted(tool_call_message(invalid), tool_call_message(invalid))
-    with pytest.raises(ValidationError):
+    with pytest.raises(SchemaValidationError) as info:
         await compose_chain(model, **FAST).ainvoke(INPUT)
+    assert isinstance(info.value, OutputParserException)  # the normalized format-error family
+    assert "technologies" in str(info.value)
     assert len(model.calls) == 2
 
 
@@ -123,6 +167,18 @@ async def test_process_text_reraises_after_logging_error(scripted, monkeypatch, 
     with caplog.at_level(logging.ERROR, logger=LOGGER), pytest.raises(ModelAuthenticationError):
         await process_text(INPUT["text"], provider="gemini")
     assert any(r.levelno == logging.ERROR and "Extraction failed" in r.getMessage() for r in caplog.records)
+
+
+async def test_process_text_logs_error_when_the_chain_cannot_be_built(monkeypatch, caplog):
+    """A missing key or bad config fails inside the try, so it is logged like any other failure."""
+
+    def broken_get_chain(provider):
+        raise ValueError("GOOGLE_API_KEY is not set")
+
+    monkeypatch.setattr(chain_module, "get_chain", broken_get_chain)
+    with caplog.at_level(logging.ERROR, logger=LOGGER), pytest.raises(ValueError, match="GOOGLE_API_KEY"):
+        await process_text(INPUT["text"], provider="gemini")
+    assert any(r.levelno == logging.ERROR and "GOOGLE_API_KEY" in r.getMessage() for r in caplog.records)
 
 
 def test_unknown_provider_is_rejected():

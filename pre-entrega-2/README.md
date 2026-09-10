@@ -57,7 +57,7 @@ tests la usan para probar que el comportamiento sale del archivo).
 |---|---|---|
 | `gemini` (default) | `gemini-3.5-flash` | `gemini-flash-lite-latest` |
 | `openai` | `gpt-4o-mini` | `gpt-4.1-mini` |
-| `anthropic` | `claude-haiku-4-5` | `claude-sonnet-4-6` |
+| `anthropic` | `claude-sonnet-4-6` | `claude-haiku-4-5` |
 
 Los tres modelos se instancian con `temperature=0` (extracción = determinismo, no
 creatividad), `timeout=30 s` (ambos de `config.yaml`) y `max_retries=0`: los reintentos internos del SDK se
@@ -156,8 +156,10 @@ Equivalencia entre los nombres de la consigna y los del código:
 
 - `process_text(text, provider)` es `async` y ejecuta `await chain.ainvoke({"text": text})`
   (`src/chain.py`). Loguea a INFO antes (proveedor, longitud), a INFO el `model_dump()`
-  validado en el éxito, y a ERROR **re-lanzando** cuando todo falló. No existe un tercer
-  resultado.
+  validado en el éxito, y a ERROR **re-lanzando** cuando todo falló — incluidas las
+  fallas al construir la cadena (clave faltante, config inválida). No existe un tercer
+  resultado. La cadena también funciona con `invoke()` sincrónico: el paso de reintento
+  consciente define ambos cuerpos.
 - `.with_retry(stop_after_attempt=3, wait_exponential_jitter=True, ...)` envuelve la
   cadena compuesta. Además de los errores transitorios cubre el **JSON incompleto**: el
   paso `check` lee el `finish_reason` de la respuesta cruda (`include_raw=True`) y lanza
@@ -168,7 +170,7 @@ Equivalencia entre los nombres de la consigna y los del código:
   (`Model call failed with …`), cada reintento (`Retry attempt 2/3 …`), el cambio de
   modelo (`switching to the fallback model`), el `finish_reason` y los tokens de cada
   respuesta, y el reintento con feedback.
-- Evidencia: `tests/test_chain.py` (12 tests) cubre reintento ante 429/timeout,
+- Evidencia: `tests/test_chain.py` (17 tests) cubre reintento ante 429/timeout,
   truncamiento, reintento con feedback, fallback, no-reintento de un 401, y que
   `process_text` loguea y re-lanza.
 
@@ -205,8 +207,8 @@ política es independiente del proveedor y no importa ningún SDK.
 
 | Falla | Ejemplo | Capa que la atiende | Qué hace |
 |---|---|---|---|
-| **Transitoria** | 429, timeout, conexión, 5xx, respuesta truncada | `.with_retry()` | hasta 3 intentos, espera `min(1·2ⁿ + jitter, 10) s` |
-| **De formato** | el objeto no valida (`ValidationError`, `OutputParserException`) | reintento consciente del error | **una** re-invocación con el texto del error de Pydantic como mensaje adicional: el modelo sabe *qué* campo falló |
+| **Transitoria** | 429, timeout, conexión, 5xx, respuesta truncada | `.with_retry()` | hasta 3 intentos, espera `min(1·2ⁿ + jitter, 10) s`. Incluye los `httpx.TimeoutException` / `ConnectError` crudos que el SDK de Gemini no envuelve |
+| **De formato** | el objeto no valida (`ValidationError`, `OutputParserException`, refusal de OpenAI, `ValueError` del parser) | reintento consciente del error | todas se normalizan en `SchemaValidationError`; **una** re-invocación con la respuesta rechazada como turno del asistente y el texto del error de Pydantic como mensaje adicional: el modelo ve *qué* dijo y *qué* campo falló |
 | **Modelo caído** | el primario agotó sus capas | `.with_fallbacks()` | la misma pila completa sobre un modelo más liviano del mismo proveedor |
 | **Permanente** | 401, 400, modelo inexistente | ninguna | un intento, fallback, y la excepción llega al llamador con su mensaje |
 
@@ -283,12 +285,15 @@ se prueba la cadena real, con `with_structured_output` real, sin red ni claves.
   es opcional por proveedor; un archivo mal formado falla al arrancar con
   `ValidationError` (proveedor desconocido, `max_attempts: 0`, temperatura fuera de
   rango, backoff incoherente, proveedor sin modelo).
-- `test_chain.py` (13) — instancia validada en el camino feliz; 429 + timeout
-  reintentados con backoff y logueados; `finish_reason=length` detectado y reintentado;
-  error de validación → segunda llamada que contiene el mensaje de Pydantic con el
-  nombre del campo; segunda falla de validación se propaga; fallback tras agotar
-  reintentos (primario llamado exactamente 3 veces); 401 **no** reintentado (1
-  llamada); `process_text` loguea INFO y devuelve / loguea ERROR y re-lanza; proveedor
+- `test_chain.py` (17) — instancia validada en el camino feliz (async y sync); 429 +
+  timeout reintentados con backoff y logueados; `httpx.TimeoutException` crudo (Gemini)
+  reintentado; `finish_reason=length` detectado y reintentado; error de validación →
+  segunda llamada que contiene la respuesta anterior del modelo y el mensaje de Pydantic
+  con el nombre del campo; respuesta sin salida estructurada normalizada y reintentada
+  con feedback; segunda falla de validación se propaga; fallback tras agotar reintentos
+  (primario llamado exactamente 3 veces); 401 **no** reintentado (1 llamada);
+  `process_text` loguea INFO y devuelve / loguea ERROR y re-lanza, también cuando la
+  cadena no se puede construir; proveedor
   desconocido y clave faltante fallan con mensaje claro; el ID de modelo, el timeout y la
   temperatura del modelo salen de `config.yaml` y `max_retries=0`; `build_chain()` sin
   argumento usa el `default_provider` y el fallback del archivo.
