@@ -1,0 +1,23 @@
+Proceso de onboarding de nuevas personas en TechCorp
+
+Alcance y objetivo. Este documento describe el proceso de incorporación de toda persona que ingresa a TechCorp, desde la firma del contrato hasta el final de los primeros 90 días. El objetivo es que cada nueva persona conozca la empresa, tenga sus herramientas listas desde el primer día y cuente con acompañamiento para integrarse a su equipo.
+
+Antes del primer día. Una vez firmado el contrato, Recursos Humanos crea el legajo digital y envía por correo un mensaje de bienvenida con la fecha de inicio, el horario del primer día y la lista de documentación pendiente. El área de Tecnología prepara la computadora portátil, crea las cuentas de correo, chat y repositorio de código, y configura la autenticación de múltiples factores. La persona líder del equipo designa a un buddy y agenda las reuniones de la primera semana.
+
+Primer día. El primer día comienza a las 9:30 en la oficina principal, o por videollamada si el ingreso es remoto. La jornada incluye la bienvenida de Recursos Humanos, la entrega del equipamiento con firma del acta de inventario, la activación de las cuentas y la capacitación obligatoria de seguridad de la información. Al mediodía, el buddy acompaña a la nueva persona a almorzar con el equipo, y por la tarde se realiza la primera reunión individual con la persona líder.
+
+El rol del buddy. El buddy es una persona del mismo equipo, con al menos un año de antigüedad, que acompaña a quien ingresa durante los primeros 90 días. Su tarea es responder preguntas del día a día, presentar a las personas de otros equipos, explicar las costumbres no escritas y hacer una reunión breve de seguimiento cada semana durante el primer mes y cada dos semanas después. El buddy no evalúa el desempeño; su función es de apoyo.
+
+Primera semana. Durante la primera semana la persona completa las capacitaciones obligatorias en la plataforma de aprendizaje: seguridad de la información, código de conducta, herramientas internas y uso del portal de Recursos Humanos. También participa de las reuniones habituales del equipo como observadora y realiza una primera tarea pequeña, elegida por la persona líder, que permita conocer el flujo de trabajo de principio a fin.
+
+Plan de 30, 60 y 90 días. La persona líder entrega, en la primera semana, un plan escrito con objetivos para los días 30, 60 y 90. A los 30 días la persona debe conocer los productos, los sistemas y las personas con las que va a trabajar. A los 60 días debe estar realizando tareas propias del rol con acompañamiento. A los 90 días debe trabajar con autonomía en las tareas habituales del puesto. Cada hito se revisa en una reunión entre la persona, su líder y el buddy.
+
+Período de prueba. Los primeros tres meses constituyen el período de prueba. Al finalizar, la persona líder y Recursos Humanos realizan una reunión de cierre en la que se revisa el cumplimiento del plan de 90 días y se confirma la continuidad en el puesto. En esa reunión también se acuerda la modalidad de trabajo definitiva, presencial, híbrida o remota, según la política de teletrabajo.
+
+Documentación del legajo. Dentro de los primeros 10 días hábiles la persona debe cargar en el portal la documentación personal: documento de identidad, constancia de domicilio, certificados de estudios y datos de contacto de emergencia. Recursos Humanos verifica la documentación y avisa por correo cuando el legajo queda completo.
+
+Cuentas y accesos. Los accesos a sistemas se otorgan de forma gradual según el rol: el primer día se activan el correo, el chat y la plataforma de aprendizaje; durante la primera semana, el repositorio de código y las herramientas del equipo; y a partir del segundo mes, los accesos a sistemas con datos de clientes, previa aprobación de la persona líder y del equipo de Seguridad.
+
+Encuestas de seguimiento. Recursos Humanos envía una encuesta breve a los 15, 45 y 90 días para conocer cómo va la integración y detectar problemas a tiempo. Las respuestas son confidenciales y se usan para mejorar el proceso. Si la persona indica alguna dificultad, Recursos Humanos coordina una reunión dentro de los 5 días hábiles siguientes.
+
+Cierre del onboarding. Al cumplirse los 90 días, la persona líder marca el proceso como completado en el portal, el buddy finaliza su rol formal y la persona pasa a participar del ciclo habitual de reuniones individuales mensuales con su líder. El equipo celebra la incorporación en la siguiente jornada presencial.

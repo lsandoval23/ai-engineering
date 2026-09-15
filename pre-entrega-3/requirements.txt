@@ -1,0 +1,24 @@
+# Python 3.12 — exact versions pinned on 2026-09-14 (latest on PyPI that day).
+# The course notebook installs these unpinned; LangChain and ChromaDB move fast, so we pin.
+
+# LangChain
+langchain==1.4.0
+langchain-core==1.6.3
+langchain-text-splitters==1.1.2     # RecursiveCharacterTextSplitter.from_tiktoken_encoder
+langchain-chroma==1.1.0             # Chroma vector-store wrapper
+langchain-huggingface==1.2.2        # HuggingFaceEmbeddings (local, keyless)
+langchain-google-genai==4.4.0       # ChatGoogleGenerativeAI (the only API key)
+
+# Storage and models
+chromadb==1.5.9
+sentence-transformers==6.0.1        # pulls torch (CPU wheel on Windows/Linux)
+tiktoken==0.14.0                    # chunk size measured in tokens
+
+# Config and validation
+pydantic==2.13.5
+python-dotenv==1.2.3
+PyYAML==6.0.3
+
+# Testing (offline by default: the LLM tests skip without GOOGLE_API_KEY)
+pytest==9.1.1
+pytest-asyncio==1.4.0

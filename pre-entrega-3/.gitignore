@@ -1,0 +1,22 @@
+# Secrets — never commit
+.env
+
+# Regenerable artefacts
+vectorstore/
+
+# Environments
+.venv/
+venv/
+
+# Python artifacts
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
