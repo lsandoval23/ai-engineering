@@ -1,0 +1,23 @@
+Política de seguridad informática de TechCorp
+
+Alcance y objetivo. Esta política define las reglas de uso seguro de los sistemas, equipos y datos de TechCorp. Aplica a todas las personas empleadas, contratistas y proveedores con acceso a la red o a la información de la empresa, tanto en la oficina como en modalidad remota. El objetivo es proteger la información de clientes y de la empresa frente a accesos no autorizados, pérdidas y fugas.
+
+Contraseñas. Toda contraseña de acceso a sistemas de TechCorp debe tener al menos 14 caracteres y combinar letras mayúsculas, minúsculas, números y símbolos. No se permite reutilizar contraseñas usadas en servicios personales ni compartirlas con otras personas por ningún medio. Las contraseñas se almacenan únicamente en el gestor de contraseñas corporativo, que se instala en todos los equipos. Las contraseñas de cuentas con privilegios administrativos deben renovarse cada 90 días.
+
+Autenticación de múltiples factores. El acceso al correo, a la red privada virtual, al repositorio de código y a cualquier sistema con datos de clientes requiere autenticación de múltiples factores. El segundo factor obligatorio es la aplicación autenticadora corporativa instalada en el teléfono; los mensajes de texto solo se aceptan como respaldo temporal por un máximo de 7 días mientras se reemplaza un teléfono.
+
+Equipos y cifrado. Todos los equipos portátiles tienen el disco cifrado y el bloqueo automático de pantalla configurado a 5 minutos de inactividad. Está prohibido desactivar el antivirus, el cifrado o las actualizaciones automáticas. Solo el área de Tecnología puede instalar software con privilegios administrativos; las personas pueden solicitar herramientas a través de la mesa de ayuda, que las evalúa en un plazo de 3 días hábiles.
+
+Dispositivos de almacenamiento externo. El uso de memorias USB y discos externos personales está prohibido en los equipos de la empresa. Cuando un proyecto requiere transferir grandes volúmenes de datos, el área de Tecnología entrega un dispositivo cifrado corporativo registrado en el inventario, que debe devolverse al finalizar la tarea. Toda transferencia de datos de clientes hacia terceros debe realizarse por los canales seguros aprobados.
+
+Correo electrónico y phishing. El correo corporativo es solo para fines laborales. Ante un correo sospechoso, con enlaces o adjuntos inesperados, la persona no debe abrirlo ni responderlo, y debe reportarlo con el botón "Reportar phishing" del cliente de correo. La empresa realiza simulaciones de phishing cada trimestre; quienes hagan clic en un enlace simulado reciben una capacitación breve, sin sanciones.
+
+Clasificación de la información. La información se clasifica en tres niveles: pública, interna y confidencial. La información confidencial, como datos personales de clientes, contratos y código fuente de productos, solo puede almacenarse en los repositorios corporativos aprobados y nunca en servicios personales de almacenamiento en la nube, chats personales ni herramientas de inteligencia artificial externas no aprobadas por el área de Tecnología.
+
+Reporte de incidentes. Cualquier sospecha de incidente de seguridad, como un equipo perdido, una contraseña comprometida, un acceso extraño a una cuenta o un correo de phishing abierto, debe reportarse de inmediato al equipo de Seguridad por el canal de emergencias del portal interno o por teléfono a la mesa de ayuda, disponible las 24 horas. El equipo de Seguridad confirma la recepción en menos de 1 hora y comienza la contención en menos de 4 horas. Reportar un incidente nunca genera una sanción; ocultarlo sí.
+
+Uso aceptable de la red. La red corporativa no debe usarse para descargar contenido ilegal, instalar aplicaciones de intercambio de archivos ni conectar dispositivos personales sin registro previo. Los dispositivos personales, como teléfonos y tabletas, se conectan únicamente a la red de invitados, que está separada de los sistemas internos.
+
+Accesos y bajas. Los accesos a sistemas se otorgan según el rol y se revisan cada seis meses en una auditoría de permisos. Cuando una persona cambia de equipo, sus accesos anteriores se retiran en un plazo de 5 días hábiles. Cuando una persona deja la empresa, todas sus cuentas se desactivan el mismo día de su egreso y el equipo debe devolverse al área de Tecnología antes de retirarse.
+
+Capacitación y cumplimiento. Todas las personas completan la capacitación de seguridad de la información al ingresar y la renuevan una vez por año en la plataforma de aprendizaje. El incumplimiento reiterado de esta política se trata según el reglamento interno y puede implicar la pérdida de accesos.

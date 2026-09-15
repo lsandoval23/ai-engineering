@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-rag"
+version = "0.1.0"
+description = "Pre-Entrega 3: local RAG over Spanish HR policies (ChromaDB + LangChain + Gemini)"
+requires-python = ">=3.12"
+# Runtime pins live in requirements.txt (exact versions, dated). This list stays empty on
+# purpose so `pip install -e .` only registers the package and never re-resolves versions.
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+asyncio_mode = "auto"

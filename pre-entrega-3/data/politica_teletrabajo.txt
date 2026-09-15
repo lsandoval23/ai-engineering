@@ -1,0 +1,23 @@
+Política de teletrabajo de TechCorp
+
+Alcance y objetivo. Esta política establece las condiciones para trabajar de forma remota en TechCorp, de manera parcial o total. El objetivo es dar flexibilidad a las personas sin perder la coordinación entre equipos ni la seguridad de la información. El teletrabajo es una modalidad de organización del trabajo, no un beneficio individual: se acuerda por equipo y puede revisarse cuando cambian las necesidades del área.
+
+Quiénes pueden teletrabajar. Pueden acceder al teletrabajo todas las personas que hayan completado el período de prueba de tres meses y cuyas tareas puedan realizarse a distancia sin afectar a clientes ni a otros equipos. Los roles que requieren presencia física, como recepción, mantenimiento de la infraestructura del edificio o soporte técnico en sitio, quedan excluidos, aunque pueden acordar días remotos puntuales con su líder.
+
+Modalidad híbrida estándar. La modalidad estándar es híbrida: hasta 3 días de teletrabajo por semana y un mínimo de 2 días presenciales. Cada equipo define un día presencial fijo para todos sus integrantes, que se usa para reuniones de planificación, revisiones y actividades de integración. El día fijo se comunica al inicio de cada trimestre y solo se cambia con acuerdo de todo el equipo.
+
+Teletrabajo total. El teletrabajo total, cinco días por semana, requiere la aprobación de la dirección del área y se otorga por un período de seis meses renovable. Las personas en teletrabajo total deben asistir a la oficina al menos una vez por trimestre para las jornadas de equipo, y su asistencia se coordina con un mes de anticipación. Si la persona reside a más de 200 kilómetros de la oficina, la empresa cubre el traslado para esas jornadas.
+
+Horario y disponibilidad. Las personas en teletrabajo mantienen su jornada habitual y deben estar disponibles en la franja central de 10:00 a 16:00, hora de la oficina principal. Fuera de esa franja, cada persona organiza su tiempo con acuerdo de su líder. Durante la franja central se espera respuesta a mensajes directos en un plazo razonable y la participación en las reuniones planificadas con cámara encendida, salvo problemas de conectividad.
+
+Equipamiento provisto. La empresa entrega a cada persona una computadora portátil, un juego de auriculares con micrófono y, a pedido, un monitor externo, teclado y mouse. El equipamiento es propiedad de TechCorp, se registra en el inventario del área de Tecnología y debe devolverse al finalizar la relación laboral o al cambiar a un rol presencial. Las reparaciones se gestionan por la mesa de ayuda y no deben realizarse por cuenta propia.
+
+Conectividad. Para trabajar de forma remota se requiere una conexión a internet estable de al menos 20 megabits por segundo de bajada y 5 de subida. Si la conexión del domicilio no alcanza ese mínimo, la persona puede solicitar un dispositivo de datos móviles del plan corporativo, que se entrega en préstamo mientras dure la situación. El acceso a los sistemas internos se realiza siempre a través de la red privada virtual de la empresa.
+
+Espacio de trabajo. La persona es responsable de contar con un espacio de trabajo adecuado: una silla con respaldo regulable, una mesa a la altura correcta, iluminación suficiente y un ambiente sin ruidos que interfieran con las reuniones. La empresa ofrece una guía de ergonomía en el portal interno y una revisión virtual opcional con el servicio de salud ocupacional durante el primer mes de teletrabajo.
+
+Seguridad de la información en el hogar. Las mismas reglas de seguridad de la oficina aplican en el domicilio: bloquear la pantalla al alejarse, no compartir el equipo con otras personas de la casa, no imprimir documentos internos y no usar redes públicas sin la red privada virtual activa. Las videollamadas con información sensible deben realizarse en un espacio donde otras personas no puedan escucharlas.
+
+Días presenciales y coworking. Cuando una persona viaja a otra ciudad donde TechCorp tiene oficina, puede trabajar desde allí registrando su visita en el portal con 48 horas de anticipación. También es posible usar espacios de coworking del convenio corporativo hasta 4 días por mes, reservando el escritorio a través del portal.
+
+Revisión y suspensión de la modalidad. La modalidad de teletrabajo se revisa cada seis meses entre la persona y su líder. Puede suspenderse temporalmente por necesidades del proyecto, por problemas reiterados de disponibilidad o por incumplimiento de las reglas de seguridad. Toda suspensión debe comunicarse por escrito con al menos dos semanas de anticipación, salvo en casos de incidentes de seguridad, donde es inmediata.
