@@ -109,8 +109,17 @@ def get_pipeline() -> RAGPipeline:
 
 
 def _normalise_refusal(answer: str, refusal_sentence: str) -> str:
-    """If the model refused but decorated the sentence, return the exact configured sentence."""
-    return refusal_sentence if refusal_sentence in answer else answer.strip()
+    """Return the exact configured sentence when the model refused and only decorated it.
+
+    Decoration is quotes, punctuation or whitespace around the sentence. Any other text is
+    kept as written, refusal included: in a two-part question the model may answer one
+    half from the context and refuse the other, and that answered half must survive.
+    """
+    answer = answer.strip()
+    leftover = answer.replace(refusal_sentence, "")
+    if refusal_sentence in answer and not any(char.isalnum() for char in leftover):
+        return refusal_sentence
+    return answer
 
 
 async def get_rag_response(query: str) -> RAGResponse:

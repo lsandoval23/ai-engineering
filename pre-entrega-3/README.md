@@ -82,7 +82,6 @@ fábrica, uno para `embed_documents` y otro para `embed_query`.
 ```bash
 python -m local_rag.ingest              # carga data/, chunkea, indexa en ./vectorstore
 python -m local_rag.main                # corre la pregunta respondible y la pregunta trampa
-python -m local_rag.main --interactive  # además, abre un prompt para preguntas propias
 pytest                                  # ver sección Tests
 ```
 
@@ -93,6 +92,11 @@ chunks se indexan; si se edita un archivo, solo sus chunks cambiados se reembebe
 se borra un archivo, sus chunks se eliminan de la colección. Esto reemplaza el chequeo
 del notebook de la clase ("¿existe la carpeta `vectorstore/`?"), que ignora los
 archivos nuevos una vez que el índice ya existe.
+
+Cada chunk registra además el modelo de embeddings y el prefijo de documento que
+generaron su vector. Si cambia `embedding_model_name` o `embedding_document_prefix`
+en `config.yaml`, el próximo ingest reinicia la colección y reembebe todo
+(`rebuilt=True`) en lugar de mezclar vectores de dos modelos.
 
 Con el corpus de `data/` (cuatro políticas, ~700–800 palabras cada una), el chunking
 produjo **12 chunks** — bien por encima de `top_k=4`, así que la recuperación es
@@ -173,10 +177,7 @@ se **saltan automáticamente** si `GOOGLE_API_KEY` no está configurada.
   (`ScriptedChatModel`), `get_rag_response` arma las fuentes desde los metadatos,
   reintenta ante una respuesta mal formada, propaga el error tras agotar los reintentos,
   y normaliza un rechazo decorado a la frase exacta.
-- `tests/test_rag_integration.py` (9) — con el modelo de embeddings real y una colección
-  temporal: la ingesta es idempotente, indexa un archivo nuevo, poda uno eliminado, y la
-  pregunta de vacaciones recupera la política de vacaciones primero. Las dos últimas
-  pruebas (con clave) verifican la respuesta correcta real y la frase de rechazo exacta.
+
 
 ## Decisiones y alcance
 

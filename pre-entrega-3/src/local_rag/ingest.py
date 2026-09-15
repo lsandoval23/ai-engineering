@@ -16,13 +16,14 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from local_rag.config import get_settings
 from local_rag.logging_config import configure_logging
 from local_rag.schemas import SOURCE_METADATA_KEY
-from local_rag.store import count_chunks, load_vector_store
+from local_rag.store import count_chunks, embedding_fingerprint, load_vector_store
 
 logger = logging.getLogger(__name__)
 
 SUPPORTED_SUFFIXES: frozenset[str] = frozenset({".txt", ".md"})
 CHUNK_INDEX_KEY: str = "chunk_index"
 CONTENT_HASH_KEY: str = "content_hash"
+EMBEDDING_FINGERPRINT_KEY: str = "embedding_fingerprint"
 # Paragraph -> line -> sentence -> word -> character: the course's recursive hierarchy
 # plus the sentence separator the DocumentProcessor exercise adds.
 SEPARATORS: tuple[str, ...] = ("\n\n", "\n", ". ", " ", "")
@@ -109,6 +110,7 @@ class IngestReport:
     unchanged: int
     pruned: int
     total: int
+    rebuilt: bool
 
 
 def sync_collection(chunks: Sequence[Document], store: Chroma) -> IngestReport:
@@ -117,12 +119,30 @@ def sync_collection(chunks: Sequence[Document], store: Chroma) -> IngestReport:
     This is the "check for an existing index before re-indexing" step done per chunk
     instead of per folder: re-running is a no-op, a new file gets indexed, an edited
     file gets re-embedded, and a deleted file's chunks disappear.
+
+    A chunk is only "unchanged" if both its text and the embedding config that produced
+    its vector match. If any stored chunk was embedded with another model or document
+    prefix, the whole collection is reset and rebuilt: upserting into it would either
+    fail on a dimension mismatch or silently mix vectors from two models.
     """
+    fingerprint = embedding_fingerprint()
     existing = store.get(include=["metadatas"])
-    existing_hashes: dict[str, str | None] = {
-        chunk_id: (metadata or {}).get(CONTENT_HASH_KEY)
-        for chunk_id, metadata in zip(existing["ids"], existing["metadatas"])
-    }
+    existing_metadatas = [metadata or {} for metadata in existing["metadatas"]]
+    rebuilt = any(
+        metadata.get(EMBEDDING_FINGERPRINT_KEY) != fingerprint for metadata in existing_metadatas
+    )
+    existing_hashes: dict[str, str | None] = {}
+    if rebuilt:
+        logger.warning(
+            "Collection was embedded with a different config than %r; rebuilding all %d chunks",
+            fingerprint, len(existing_metadatas),
+        )
+        store.reset_collection()
+    else:
+        existing_hashes = {
+            chunk_id: metadata.get(CONTENT_HASH_KEY)
+            for chunk_id, metadata in zip(existing["ids"], existing_metadatas)
+        }
 
     to_upsert: list[Document] = []
     upsert_ids: list[str] = []
@@ -136,6 +156,7 @@ def sync_collection(chunks: Sequence[Document], store: Chroma) -> IngestReport:
             continue
         else:
             updated += 1
+        chunk.metadata[EMBEDDING_FINGERPRINT_KEY] = fingerprint
         to_upsert.append(chunk)
         upsert_ids.append(chunk_id)
 
@@ -150,11 +171,16 @@ def sync_collection(chunks: Sequence[Document], store: Chroma) -> IngestReport:
         store.delete(ids=stale)
 
     report = IngestReport(
-        added=added, updated=updated, unchanged=unchanged, pruned=len(stale), total=count_chunks(store)
+        added=added,
+        updated=updated,
+        unchanged=unchanged,
+        pruned=len(stale),
+        total=count_chunks(store),
+        rebuilt=rebuilt,
     )
     logger.info(
-        "Collection synced: added=%d updated=%d unchanged=%d pruned=%d total=%d",
-        report.added, report.updated, report.unchanged, report.pruned, report.total,
+        "Collection synced: added=%d updated=%d unchanged=%d pruned=%d total=%d rebuilt=%s",
+        report.added, report.updated, report.unchanged, report.pruned, report.total, report.rebuilt,
     )
     return report
 

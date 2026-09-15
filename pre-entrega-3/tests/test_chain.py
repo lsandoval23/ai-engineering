@@ -94,10 +94,24 @@ async def test_get_rag_response_raises_after_exhausting_retries(scripted, monkey
 async def test_get_rag_response_normalises_a_decorated_refusal(scripted, monkeypatch):
     refusal = get_settings().refusal_sentence
     docs = [Document(page_content="p1", metadata={"source": "a.txt"})]
-    model = scripted(AIMessage(content=json.dumps({"answer": f"Lo siento, {refusal}"})))
+    model = scripted(AIMessage(content=json.dumps({"answer": f' "{refusal}" '})))
     pipeline = RAGPipeline(retriever=_retriever_returning(docs), chain=build_chain(model))
     monkeypatch.setattr(chain_module, "get_pipeline", lambda: pipeline)
 
     response = await get_rag_response("¿Cuál es la política de bonos?")
 
     assert response.answer == refusal
+
+
+@pytest.mark.asyncio
+async def test_get_rag_response_keeps_a_partial_answer_that_also_refuses(scripted, monkeypatch):
+    refusal = get_settings().refusal_sentence
+    partial = f"Corresponden 21 días de vacaciones. Sobre los bonos: {refusal}"
+    docs = [Document(page_content="p1", metadata={"source": "a.txt"})]
+    model = scripted(AIMessage(content=json.dumps({"answer": partial}, ensure_ascii=False)))
+    pipeline = RAGPipeline(retriever=_retriever_returning(docs), chain=build_chain(model))
+    monkeypatch.setattr(chain_module, "get_pipeline", lambda: pipeline)
+
+    response = await get_rag_response("¿Cuántos días de vacaciones tengo y cuál es la política de bonos?")
+
+    assert response.answer == partial

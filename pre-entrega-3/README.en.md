@@ -80,7 +80,6 @@ are applied inside the same factory, one for `embed_documents` and one for
 ```bash
 python -m local_rag.ingest              # loads data/, chunks it, indexes into ./vectorstore
 python -m local_rag.main                # runs the answerable question and the trap question
-python -m local_rag.main --interactive  # also opens a prompt for your own questions
 pytest                                  # see the Tests section
 ```
 
@@ -90,6 +89,11 @@ hasn't changed (`added=0`); adding a new file to `data/` indexes its chunks; edi
 file re-embeds only its changed chunks; deleting a file removes its chunks from the
 collection. This replaces the course notebook's check ("does the `vectorstore/` folder
 already exist?"), which ignores new files once the index exists.
+
+Every chunk also records the embedding model and document prefix that produced its
+vector. If `embedding_model_name` or `embedding_document_prefix` changes in
+`config.yaml`, the next ingest resets the collection and re-embeds everything
+(`rebuilt=True`) instead of mixing vectors from two models.
 
 With the `data/` corpus (four policies, ~700–800 words each), chunking produced
 **12 chunks** — well above `top_k=4`, so retrieval is genuinely selective:
@@ -170,10 +174,7 @@ automatically** when `GOOGLE_API_KEY` is not set.
   (`ScriptedChatModel`), `get_rag_response` builds sources from metadata, retries on a
   malformed reply, propagates the error once retries are exhausted, and normalises a
   decorated refusal to the exact sentence.
-- `tests/test_rag_integration.py` (9) — with the real embedding model and a temporary
-  collection: ingest is idempotent, indexes a new file, prunes a deleted one, and the
-  vacation question retrieves the vacation policy first. The last two tests (key
-  required) verify the real correct answer and the exact refusal sentence.
+
 
 ## Decisions and scope
 

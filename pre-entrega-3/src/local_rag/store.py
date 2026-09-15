@@ -46,6 +46,16 @@ def build_embeddings() -> HuggingFaceEmbeddings:
         return HuggingFaceEmbeddings(**embedding_kwargs)
 
 
+def embedding_fingerprint() -> str:
+    """What produced the stored document vectors: the model and the document prefix.
+
+    Ingest records it on every chunk so a config change is detected instead of mixing
+    vectors from two models. The query prefix is left out: it never touches stored vectors.
+    """
+    settings = get_settings()
+    return f"{settings.embedding_model_name}|{settings.embedding_document_prefix}"
+
+
 def load_vector_store() -> Chroma:
     """Open (or create) the persisted collection with the shared embedding model."""
     settings = get_settings()
